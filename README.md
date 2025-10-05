@@ -232,6 +232,70 @@ $HOME/.local/share/crush/crush.json
 %LOCALAPPDATA%\crush\crush.json
 ```
 
+### Context files
+
+Crush automatically loads several markdown files from your project directory to provide context and instructions to the AI agents. These files help the AI understand your project's specific requirements, coding standards, and preferences.
+
+The following files are automatically detected and loaded as context (case-insensitive):
+
+- `.github/copilot-instructions.md` - GitHub Copilot instructions for your project
+- `.cursorrules` - Cursor editor rules and coding conventions
+- `.cursor/rules/` - Directory containing Cursor editor rules
+- `CLAUDE.md` / `CLAUDE.local.md` - Claude-specific instructions and preferences
+- `GEMINI.md` / `gemini.md` - Gemini-specific instructions
+- `crush.md` / `crush.local.md` - Crush-specific instructions for this project
+- `Crush.md` / `Crush.local.md` - Alternative Crush instruction files
+- `CRUSH.md` / `CRUSH.local.md` - Uppercase variant of Crush instruction files
+- `AGENTS.md` / `agents.md` / `Agents.md` - Agent configuration and behavior guidelines
+
+These files can contain:
+- Project-specific coding standards and conventions
+- Architectural guidelines and design patterns
+- Preferred libraries and frameworks
+- Testing requirements and standards
+- Documentation guidelines
+- Team-specific workflows and processes
+
+You can also specify additional context files in your configuration:
+
+```json
+{
+  "$schema": "https://charm.land/crush.json",
+  "options": {
+    "context_paths": [
+      "docs/architecture.md",
+      "CONTRIBUTING.md",
+      "STYLE_GUIDE.md"
+    ]
+  }
+}
+```
+
+<details>
+<summary><strong>Technical Details</strong></summary>
+
+The context file loading system is implemented by two key source files:
+
+**1. `internal/llm/prompt/coder.go:17-40` - Context Integration**
+The `CoderPrompt()` function is where context files are integrated into AI prompts. It:
+- Calls `getContextFromPaths()` to load and process context files
+- Formats the content with a clear "# Project-Specific Context" header
+- Injects the context into the system prompt that guides the AI's behavior
+- Ensures the AI follows project-specific instructions by making them part of the system prompt
+
+**2. `internal/llm/prompt/prompt.go:61-143` - Context Processing**
+The `processContextPaths()` function contains the core file processing logic:
+- Reads files concurrently using goroutines for efficiency
+- Handles both individual files and directories (like `.cursor/rules/`)
+- Expands environment variables and `~` in file paths
+- Formats content with `# From: <filepath>` prefixes for clear attribution
+- Prevents duplicate processing with case-insensitive file tracking
+- Returns formatted context content that gets injected into AI prompts
+
+This design ensures that project-specific guidelines, coding standards, and preferences are automatically available to the AI agents without requiring manual specification in each conversation.
+
+</details>
+
 ### LSPs
 
 Crush can use LSPs for additional context to help inform its decisions, just
