@@ -270,32 +270,6 @@ You can also specify additional context files in your configuration:
   }
 }
 ```
-
-<details>
-<summary><strong>Technical Details</strong></summary>
-
-The context file loading system is implemented by two key source files:
-
-**1. `internal/llm/prompt/coder.go:17-40` - Context Integration**
-The `CoderPrompt()` function is where context files are integrated into AI prompts. It:
-- Calls `getContextFromPaths()` to load and process context files
-- Formats the content with a clear "# Project-Specific Context" header
-- Injects the context into the system prompt that guides the AI's behavior
-- Ensures the AI follows project-specific instructions by making them part of the system prompt
-
-**2. `internal/llm/prompt/prompt.go:61-143` - Context Processing**
-The `processContextPaths()` function contains the core file processing logic:
-- Reads files concurrently using goroutines for efficiency
-- Handles both individual files and directories (like `.cursor/rules/`)
-- Expands environment variables and `~` in file paths
-- Formats content with `# From: <filepath>` prefixes for clear attribution
-- Prevents duplicate processing with case-insensitive file tracking
-- Returns formatted context content that gets injected into AI prompts
-
-This design ensures that project-specific guidelines, coding standards, and preferences are automatically available to the AI agents without requiring manual specification in each conversation.
-
-</details>
-
 ### LSPs
 
 Crush can use LSPs for additional context to help inform its decisions, just
